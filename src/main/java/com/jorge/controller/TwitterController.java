@@ -138,11 +138,8 @@ public class TwitterController {
 			return "error";
 		}
 		
-		if(!user)
-			return "tw";
-		else
-			return "redirect:/fw";
-		
+			
+		return user?"redirect:/fw":"tw";
 	}
 	
 	
@@ -156,10 +153,7 @@ public class TwitterController {
 	 */
 	@RequestMapping("/fw")
 	public String fb(HttpServletRequest request, Model model, HttpSession session) {
-		if(!user)
-			user = true;
-		else
-			user = false;
+		user = user?false:true;
 		
 		OAuthToken token = (OAuthToken)	session.getAttribute("twitterToken");
 		TwitterConnectionFactory connectionFactory = new TwitterConnectionFactory(consumerKey, consumerSecret); // (Consumer Key, Consumer Secret)
