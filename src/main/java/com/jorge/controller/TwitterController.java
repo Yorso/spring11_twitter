@@ -25,7 +25,7 @@ public class TwitterController {
 	// Data given by Twitter when we create the app
 	private String consumerKey = "ERmbXPyVhZHGhyGRuPhh920Gk";
 	private String consumerSecret = "ZdEIeIw2nfWFMlFYNjOGOY4Qdz89Aurz8e6BeBWrGEFxfgmrCJ";
-	private static int user = 0; // Used for redirections
+	private static boolean user = false; // Used for redirections
 	
 	
 	/*************************************************************************************
@@ -138,12 +138,10 @@ public class TwitterController {
 			return "error";
 		}
 		
-		if(user != 1)
+		if(!user)
 			return "tw";
-		else{
-			user = 2;
+		else
 			return "redirect:/fw";
-		}
 		
 	}
 	
@@ -158,10 +156,10 @@ public class TwitterController {
 	 */
 	@RequestMapping("/fw")
 	public String fb(HttpServletRequest request, Model model, HttpSession session) {
-		if(user == 0)
-			user = 1;
-		else if(user == 2)
-			user = 0;
+		if(!user)
+			user = true;
+		else
+			user = false;
 		
 		OAuthToken token = (OAuthToken)	session.getAttribute("twitterToken");
 		TwitterConnectionFactory connectionFactory = new TwitterConnectionFactory(consumerKey, consumerSecret); // (Consumer Key, Consumer Secret)
@@ -175,7 +173,7 @@ public class TwitterController {
 			else{
 				TwitterProfile profile = twitter.userOperations().getUserProfile(); // Twitter object to retrieve the user profile
 				model.addAttribute("profile", profile); // Pass the user profile to the JSP view
-				user = 0;
+				user = false;
 				
 				return "user";
 			}
