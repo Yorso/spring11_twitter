@@ -7,8 +7,8 @@
   <artifactId>spring11_social</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <packaging>war</packaging>
-  <name>spring11_social</name>
-  <description>Connecting with social networks with Spring</description>
+  <name>spring11_twitter</name>
+  <description>Connecting with Twitter</description>
   
   <properties>
 	  <java.version>1.8</java.version>
@@ -39,7 +39,12 @@
 			<artifactId>spring-webmvc</artifactId>
 			<version>${spring.version}</version>
 		</dependency>
-		
+		<dependency>
+        <groupId>org.springframework.session</groupId>
+        <artifactId>spring-session</artifactId>
+        <version>1.2.1.RELEASE</version>
+    </dependency>
+        
 		<!-- JSTL -->
 		<dependency>
 			<groupId>javax.servlet</groupId>
@@ -47,10 +52,32 @@
 			<version>1.2</version>
 		</dependency>
 		
+		<!-- Add the Maven dependencies for Spring Social and Spring Social Twitter -->
+		<dependency>
+			<groupId>org.springframework.social</groupId>
+			<artifactId>spring-social-core</artifactId>
+			<version>1.1.0.RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.social</groupId>
+			<artifactId>spring-social-web</artifactId>
+			<version>1.1.0.RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.social</groupId>
+			<artifactId>spring-social-config</artifactId>
+			<version>1.1.0.RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.social</groupId>
+			<artifactId>spring-social-twitter</artifactId>
+			<version>1.1.0.RELEASE</version>
+		</dependency>
+		
 	</dependencies>
 	
 	<build>
-  	  <finalName>spring11_social</finalName>
+  	  <finalName>spring11_twitter</finalName>
 	  <plugins>
 	  
 	  	  <!-- It allows Maven to generate .war files without requiring a web.xml file -->
