@@ -8,6 +8,10 @@
 		<title>Error Twitter Page</title>
 	</head>
 	<body>
-		<p>There was a error. Check Consumer Key and Consumer Secret values</p>
+		<h3>There was a error:</h3>
+		<ul>
+		  <li> Check Consumer Key and Consumer Secret values</li>
+		  <li>Rate limit of connections exceeded (so wait a few minutes and try again)</li>
+		</ul>
 	</body>
 </html>
