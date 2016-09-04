@@ -1,6 +1,7 @@
 package com.jorge.controller;
 
 import java.io.IOException;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -11,6 +12,7 @@ import org.springframework.social.oauth1.AuthorizedRequestToken;
 import org.springframework.social.oauth1.OAuth1Operations;
 import org.springframework.social.oauth1.OAuth1Parameters;
 import org.springframework.social.oauth1.OAuthToken;
+import org.springframework.social.twitter.api.Tweet;
 import org.springframework.social.twitter.api.Twitter;
 import org.springframework.social.twitter.api.TwitterProfile;
 import org.springframework.social.twitter.connect.TwitterConnectionFactory;
@@ -18,14 +20,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import com.jorge.util.Consts;
+
 
 @Controller
 public class TwitterController {
 
-	// Data given by Twitter when we create the app
-	private String consumerKey = "ERmbXPyVhZHGhyGRuPhh920Gk";
-	private String consumerSecret = "ZdEIeIw2nfWFMlFYNjOGOY4Qdz89Aurz8e6BeBWrGEFxfgmrCJ";
 	private static boolean user = false; // Used for redirections
+	private String errorRes = "";
 	
 	
 	/*************************************************************************************
@@ -60,7 +62,9 @@ public class TwitterController {
 	// Create a Twitter login method containing your API key and API secret, which will redirect to	Twitter's authorization page
 	@RequestMapping("/tw/login")
 	public void login(HttpServletRequest request, HttpServletResponse response, HttpSession session)	throws IOException {
-		TwitterConnectionFactory connectionFactory = new TwitterConnectionFactory(consumerKey, consumerSecret); // (Consumer Key, Consumer Secret)
+		System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": We are in /tw/login");
+		
+		TwitterConnectionFactory connectionFactory = new TwitterConnectionFactory(Consts.CONSUMER_KEY, Consts.CONSUMER_SECRET); // (Consumer Key, Consumer Secret)
 
 		try{
 			OAuth1Operations oauthOperations =	connectionFactory.getOAuthOperations();
@@ -71,6 +75,7 @@ public class TwitterController {
 			
 			String authorizeUrl = oauthOperations.buildAuthenticateUrl(requestToken.getValue(),	OAuth1Parameters.NONE);
 			
+			System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": Redirecting to Tweeter login page");
 			response.sendRedirect(authorizeUrl);
 			
 		}
@@ -78,6 +83,11 @@ public class TwitterController {
 			//response.sendRedirect("../error"); // Error page, key and/or secret values are wrong. Goes to 'public String errorPage()' method below
 											   	 // We write ../error because its current path in browser is http://192.168.1.42:8080/spring11_twitter/tw/error but error page true path is in http://192.168.1.42:8080/spring11_twitter/error
 											     // We can write @RequestMapping("/tw/error") and write response.sendRedirect("error"); Final path in browser would be http://192.168.1.42:8080/spring11_twitter/tw/error but in project WEB-INF/jsp/error
+			session.setAttribute("res", Consts.KEY);
+			errorRes = e.getMessage() == null?"NullPointerException":e.getMessage().toString();
+			
+			System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": Error: " + errorRes);
+			System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": Redirecting to /tw/error");
 			response.sendRedirect("error");
 		}
 	}
@@ -85,7 +95,13 @@ public class TwitterController {
 	// Error page
 	//@RequestMapping("/error")
 	@RequestMapping("/tw/error")
-	public String errorPage() {
+	public String errorPage(HttpSession session, Model model) {
+		System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": We are in /tw/error");
+		
+		if(session.getAttribute("res") != null)
+			model.addAttribute(session.getAttribute("res"));
+		
+		System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": Redirecting to error.jsp page");
 		return "error";
 	}
 	
@@ -94,7 +110,9 @@ public class TwitterController {
 	// login() to get an access token and save it in the session
 	@RequestMapping("/tw/callback")
 	public String callback(String oauth_token, String oauth_verifier, HttpServletRequest request, HttpSession session) {
-		TwitterConnectionFactory connectionFactory = new TwitterConnectionFactory(consumerKey, consumerSecret); // (Consumer Key, Consumer Secret)
+		System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": We are in /tw/callback");
+		
+		TwitterConnectionFactory connectionFactory = new TwitterConnectionFactory(Consts.CONSUMER_KEY, Consts.CONSUMER_SECRET); // (Consumer Key, Consumer Secret)
 
 		OAuthToken requestToken = (OAuthToken) session.getAttribute("requestToken");
 		
@@ -106,40 +124,65 @@ public class TwitterController {
 				session.setAttribute("twitterToken", token);
 			}
 			catch (Exception e) {
-				return "redirect:/tw";
+				errorRes = e.getMessage() == null?"NullPointerException":e.getMessage().toString();
+				
+				System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": Error: " + errorRes);
 			}
 		
 		}
 		
+		System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": Redirecting to /tw");
 		return "redirect:/tw";
 	}
 	
 	// Create a method that will display a JSP if it manages to connect to Twitter. Otherwise, it will redirect to the login URL
 	@RequestMapping("/tw")
-	public String tw(HttpServletRequest request, HttpSession session) {
+	public String tw(HttpServletRequest request, HttpSession session, Model model) {
+		System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": We are in /tw");
+		
 		OAuthToken token = (OAuthToken)	session.getAttribute("twitterToken");
 		
 		if(token == null) {
+			System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": Redirecting to /tw/login");
 			return "redirect:/tw/login";
 		}
 		
-		TwitterConnectionFactory connectionFactory = new TwitterConnectionFactory(consumerKey, consumerSecret); // (Consumer Key, Consumer Secret)
+		TwitterConnectionFactory connectionFactory = new TwitterConnectionFactory(Consts.CONSUMER_KEY, Consts.CONSUMER_SECRET); // (Consumer Key, Consumer Secret)
 		
 		try{
 			Connection<Twitter> connection = connectionFactory.createConnection(token);
 			
 			Twitter twitter = connection.getApi();
 			
-			if( ! twitter.isAuthorized()) {
+			if(!twitter.isAuthorized()){
+				System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": No authoritation. Redirecting to /tw/login");
 				return "/tw/login";
 			}
+			
+			System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": Authoritation given.");
+			
+			//twitter.timelineOperations().updateStatus("Testing posting a tweet"); // Posting a tweet to Twitter
+			//twitter.directMessageOperations().sendDirectMessage("tweeteruser01", "Hello user, how are you?."); // Sending a private message to another Twitter user
 		}
 		catch(Exception e){
+			model.addAttribute("res", Consts.RATE_LIMIT);
+			errorRes = e.getMessage() == null?"NullPointerException":e.getMessage().toString();
+			
+			System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": Error: " + errorRes);
+			System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": Redirecting to error.jsp page");
 			return "error";
 		}
 		
 			
-		return user?"redirect:/fw":"tw";
+		//return user?"redirect:/fw":"tw";
+		if(user){
+			System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": Redirecting to /fw");
+			return "redirect:/fw";
+		}
+		else{
+			System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": Redirecting to tw.jsp page");
+			return "tw";
+		}
 	}
 	
 	
@@ -153,26 +196,39 @@ public class TwitterController {
 	 */
 	@RequestMapping("/fw")
 	public String fb(HttpServletRequest request, Model model, HttpSession session) {
+		System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": We are in /fw");
 		user = user?false:true;
 		
 		OAuthToken token = (OAuthToken)	session.getAttribute("twitterToken");
-		TwitterConnectionFactory connectionFactory = new TwitterConnectionFactory(consumerKey, consumerSecret); // (Consumer Key, Consumer Secret)
+		TwitterConnectionFactory connectionFactory = new TwitterConnectionFactory(Consts.CONSUMER_KEY, Consts.CONSUMER_SECRET); // (Consumer Key, Consumer Secret)
+		
 		try{
 			Connection<Twitter> connection = connectionFactory.createConnection(token);
 			Twitter twitter = connection.getApi();
 			
-			if( ! twitter.isAuthorized()) {
+			if(!twitter.isAuthorized()){
+				System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": No authoritation. Redirecting to /tw/login");
 				return "redirect:/tw/login";
 			}
 			else{
+				System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": Authoritation given.");
+				
 				TwitterProfile profile = twitter.userOperations().getUserProfile(); // Twitter object to retrieve the user profile
+				List<Tweet> tweets = twitter.timelineOperations().getUserTimeline(); // Retrieving the tweets of a Twitter user
+				
 				model.addAttribute("profile", profile); // Pass the user profile to the JSP view
+				model.addAttribute("tweets", tweets); // Pass the user tweets to the JSP view
 				user = false;
 				
+				System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": Redirecting to user.jsp page");
 				return "user";
 			}
 		}
 		catch(Exception e){
+			errorRes = e.getMessage() == null?"NullPointerException":e.getMessage().toString();
+			
+			System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": Error: " + errorRes);
+			System.out.println(this.getClass().getSimpleName() + "." + new Exception().getStackTrace()[0].getMethodName() + ": Redirecting to /tw/login");
 			return "redirect:/tw/login";
 		}
 	}
